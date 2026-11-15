@@ -90,13 +90,13 @@ import { ToastContainerComponent } from '../../../../shared/ui/toast-container/t
         <div class="flex items-center gap-1.5 font-medium">
           @if (store.error()) {
             <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-            <span>REST API Offline (http://localhost:8080)</span>
+            <span>REST API Offline</span>
           } @else if (store.isLoading()) {
             <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
             <span>Syncing REST API...</span>
           } @else {
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>ASP.NET Core 8 Connected (http://localhost:8080)</span>
+            <span>ASP.NET Core 8 Connected</span>
           }
         </div>
       </footer>
