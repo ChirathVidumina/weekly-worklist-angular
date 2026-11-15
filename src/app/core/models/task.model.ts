@@ -1,5 +1,4 @@
 import { Priority } from './priority.enum';
-import { Category } from './category.enum';
 
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'COMPLETED';
 
@@ -10,7 +9,8 @@ export interface Task {
   date: string; // ISO date format YYYY-MM-DD
   dateKey?: string; // Spring Boot backend field compatibility
   priority: Priority;
-  category: Category;
+  categoryId: string; // Dynamic user-managed category ID
+  category?: string; // Fallback string for backend compatibility
   status: TaskStatus;
   estimatedMinutes: number;
   order: number;
@@ -26,7 +26,8 @@ export interface CreateTaskDto {
   date: string;
   dateKey?: string;
   priority: Priority;
-  category: Category;
+  categoryId: string;
+  category?: string;
   status?: TaskStatus;
   estimatedMinutes?: number;
   order?: number;
@@ -39,7 +40,8 @@ export interface UpdateTaskDto {
   date?: string;
   dateKey?: string;
   priority?: Priority;
-  category?: Category;
+  categoryId?: string;
+  category?: string;
   status?: TaskStatus;
   estimatedMinutes?: number;
   order?: number;

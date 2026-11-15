@@ -104,6 +104,7 @@ export class HttpTaskRepository implements TaskRepository {
 
   private normalizeTask(raw: any): Task {
     const date = raw.date || raw.dateKey || new Date().toISOString().split('T')[0];
+    const categoryId = raw.categoryId || (raw.category ? `cat-${raw.category.toLowerCase()}` : 'cat-work');
     return {
       id: String(raw.id),
       title: raw.title || '',
@@ -111,7 +112,8 @@ export class HttpTaskRepository implements TaskRepository {
       date,
       dateKey: raw.dateKey || date,
       priority: raw.priority || 'MEDIUM',
-      category: raw.category || 'ENGINEERING',
+      categoryId,
+      category: raw.category || categoryId,
       status: raw.status || 'TODO',
       estimatedMinutes: Number(raw.estimatedMinutes) || 0,
       order: Number(raw.order) ?? 0,

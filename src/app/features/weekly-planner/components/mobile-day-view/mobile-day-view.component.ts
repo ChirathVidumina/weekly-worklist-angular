@@ -94,19 +94,26 @@ import { DurationFormatPipe } from '../../../../shared/pipes/duration-format.pip
             (cdkDropListDropped)="onDrop($event, current.date)"
             class="space-y-3 min-h-[200px]"
           >
-            @for (task of current.tasks; track task.id) {
-              <div cdkDrag [cdkDragData]="task">
-                <div *cdkDragPlaceholder class="cdk-drag-placeholder"></div>
-                <app-task-card [task]="task" />
+            @if (store.isLoading() && current.tasks.length === 0) {
+              <div class="space-y-2.5 animate-pulse pt-2">
+                <div class="h-20 bg-slate-200/60 dark:bg-slate-800/40 rounded-xl"></div>
+                <div class="h-16 bg-slate-200/40 dark:bg-slate-800/20 rounded-xl"></div>
               </div>
-            } @empty {
-              <app-empty-state
-                title="No tasks scheduled"
-                [message]="'You have no tasks lined up for ' + current.dayName + '. Tap below to add your first item.'"
-                icon="calendar"
-                actionLabel="Schedule Task"
-                (action)="onAddForDay(current.date)"
-              />
+            } @else {
+              @for (task of current.tasks; track task.id) {
+                <div cdkDrag [cdkDragData]="task">
+                  <div *cdkDragPlaceholder class="cdk-drag-placeholder"></div>
+                  <app-task-card [task]="task" />
+                </div>
+              } @empty {
+                <app-empty-state
+                  title="No tasks scheduled"
+                  [message]="'You have no tasks lined up for ' + current.dayName + '. Tap below to add your first item.'"
+                  icon="calendar"
+                  actionLabel="Schedule Task"
+                  (action)="onAddForDay(current.date)"
+                />
+              }
             }
           </div>
         </div>

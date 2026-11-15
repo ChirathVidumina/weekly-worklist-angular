@@ -67,28 +67,36 @@ import { DurationFormatPipe } from '../../../../shared/pipes/duration-format.pip
         (cdkDropListDropped)="onDrop($event)"
         class="flex-1 p-2.5 space-y-2.5 overflow-y-auto min-h-[140px]"
       >
-        @for (task of day.tasks; track task.id) {
-          <div cdkDrag [cdkDragData]="task">
-            <!-- Drop placeholder indicator -->
-            <div *cdkDragPlaceholder class="cdk-drag-placeholder"></div>
-            <app-task-card [task]="task" />
+        @if (store.isLoading() && day.tasks.length === 0) {
+          <!-- Skeleton Loading Cards -->
+          <div class="space-y-2 animate-pulse pt-1">
+            <div class="h-16 bg-slate-200/60 dark:bg-slate-800/40 rounded-xl"></div>
+            <div class="h-14 bg-slate-200/40 dark:bg-slate-800/20 rounded-xl"></div>
           </div>
-        } @empty {
-          <!-- Empty Day Placeholder -->
-          <div
-            (click)="onQuickAdd()"
-            class="h-28 border border-dashed border-slate-200 dark:border-slate-800/80 rounded-xl flex flex-col items-center justify-center p-3 text-center cursor-pointer hover:border-indigo-400/50 dark:hover:border-indigo-500/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all group"
-          >
-            <svg class="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 transition-colors mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
-              No tasks
-            </span>
-            <span class="text-[10px] text-slate-300 dark:text-slate-600 mt-0.5">
-              Click to schedule
-            </span>
-          </div>
+        } @else {
+          @for (task of day.tasks; track task.id) {
+            <div cdkDrag [cdkDragData]="task">
+              <!-- Drop placeholder indicator -->
+              <div *cdkDragPlaceholder class="cdk-drag-placeholder"></div>
+              <app-task-card [task]="task" />
+            </div>
+          } @empty {
+            <!-- Empty Day Placeholder -->
+            <div
+              (click)="onQuickAdd()"
+              class="h-28 border border-dashed border-slate-200 dark:border-slate-800/80 rounded-xl flex flex-col items-center justify-center p-3 text-center cursor-pointer hover:border-indigo-400/50 dark:hover:border-indigo-500/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all group"
+            >
+              <svg class="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 transition-colors mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
+                No tasks
+              </span>
+              <span class="text-[10px] text-slate-300 dark:text-slate-600 mt-0.5">
+                Click to schedule
+              </span>
+            </div>
+          }
         }
       </div>
     </div>
@@ -98,7 +106,7 @@ export class DayColumnComponent {
   @Input({ required: true }) day!: DaySchedule;
   @Input() connectedDropLists: string[] = [];
 
-  private readonly store = inject(WeeklyWorkStore);
+  readonly store = inject(WeeklyWorkStore);
 
   onQuickAdd(): void {
     this.store.openCreateModal(this.day.date);

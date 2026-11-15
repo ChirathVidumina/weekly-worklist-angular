@@ -1,5 +1,4 @@
 import { Priority } from './priority.enum';
-import { Category } from './category.enum';
 
 export type StatusFilter = 'ALL' | 'ACTIVE' | 'COMPLETED';
 export type SortOption = 'ORDER' | 'PRIORITY' | 'DURATION' | 'TITLE';
@@ -8,7 +7,7 @@ export interface FilterState {
   searchQuery: string;
   status: StatusFilter;
   priorities: Priority[];
-  categories: Category[];
+  categories: string[]; // Dynamic Category IDs
   sortBy: SortOption;
   sortAscending: boolean;
 }

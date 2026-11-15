@@ -1,6 +1,19 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import { Task, CreateTaskDto, UpdateTaskDto, WeekSchedule, DaySchedule, FilterState, INITIAL_FILTER_STATE, Priority } from '../models';
-import { LocalStorageTaskRepository } from '../repositories/local-storage-task.repository';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import {
+  Task,
+  CreateTaskDto,
+  UpdateTaskDto,
+  ReorderTaskDto,
+  WeekSchedule,
+  DaySchedule,
+  FilterState,
+  INITIAL_FILTER_STATE,
+  CategoryItem,
+  DEFAULT_CATEGORIES,
+  UNCATEGORIZED_CATEGORY
+} from '../models';
+import { STORAGE_KEYS } from '../constants/storage-keys.constant';
+import { TaskRepository } from '../repositories/task-repository.interface';
 import { DateUtilsService } from '../services/date-utils.service';
 import { ToastService } from '../services/toast.service';
 import confetti from 'canvas-confetti';
@@ -9,20 +22,23 @@ import confetti from 'canvas-confetti';
   providedIn: 'root'
 })
 export class WeeklyWorkStore {
-  private readonly repository = inject(LocalStorageTaskRepository);
+  private readonly repository = inject(TaskRepository);
   private readonly dateUtils = inject(DateUtilsService);
   private readonly toast = inject(ToastService);
 
   // Raw State Signals
   readonly tasks = signal<Task[]>([]);
-  readonly currentDate = signal<Date>(new Date(2026, 10, 15)); // Nov 15, 2026
+  readonly categories = signal<CategoryItem[]>(this.loadStoredCategories());
+  readonly currentDate = signal<Date>(new Date());
   readonly filters = signal<FilterState>(INITIAL_FILTER_STATE);
   readonly selectedTaskId = signal<string | null>(null);
   readonly isFormModalOpen = signal<boolean>(false);
+  readonly isCategoryManagerOpen = signal<boolean>(false);
   readonly editingTask = signal<Task | null>(null);
   readonly modalPreselectedDate = signal<string | null>(null);
-  readonly activeMobileDay = signal<string>('2026-11-15');
+  readonly activeMobileDay = signal<string>(this.dateUtils.formatDateToISO(new Date()));
   readonly isLoading = signal<boolean>(false);
+  readonly error = signal<string | null>(null);
 
   // Computed: Week Boundary
   readonly monday = computed(() => this.dateUtils.getMondayOfWeek(this.currentDate()));
@@ -105,28 +121,128 @@ export class WeeklyWorkStore {
   });
 
   constructor() {
-    this.loadInitialTasks();
-
-    // Auto-save effect
-    effect(() => {
-      const allTasks = this.tasks();
-      if (allTasks.length > 0) {
-        this.repository.saveTasks(allTasks).subscribe();
-      }
-    });
+    this.loadWeekTasks();
   }
 
-  // Actions
-  loadInitialTasks(): void {
+  // Load categories from LocalStorage or seed defaults
+  private loadStoredCategories(): CategoryItem[] {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return [...DEFAULT_CATEGORIES];
+    }
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to parse stored categories', e);
+    }
+    return [...DEFAULT_CATEGORIES];
+  }
+
+  private saveCategories(categories: CategoryItem[]): void {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
+    }
+  }
+
+  getCategoryById(categoryId?: string | null): CategoryItem {
+    if (!categoryId) return UNCATEGORIZED_CATEGORY;
+    const found = this.categories().find(c => c.id === categoryId);
+    return found || UNCATEGORIZED_CATEGORY;
+  }
+
+  addCategory(name: string, color: string): CategoryItem {
+    const trimmed = name.trim();
+    const id = `cat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const newCategory: CategoryItem = {
+      id,
+      name: trimmed,
+      color,
+      isDefault: false
+    };
+
+    this.categories.update(current => {
+      const updated = [...current, newCategory];
+      this.saveCategories(updated);
+      return updated;
+    });
+
+    this.toast.success('Category created', `"${trimmed}" is now available.`);
+    return newCategory;
+  }
+
+  updateCategory(id: string, name: string, color: string): void {
+    const trimmed = name.trim();
+    this.categories.update(current => {
+      const updated = current.map(c => c.id === id ? { ...c, name: trimmed, color } : c);
+      this.saveCategories(updated);
+      return updated;
+    });
+
+    this.toast.info('Category updated', `"${trimmed}" saved.`);
+  }
+
+  deleteCategory(id: string): void {
+    const category = this.categories().find(c => c.id === id);
+    if (!category) return;
+
+    this.categories.update(current => {
+      const updated = current.filter(c => c.id !== id);
+      this.saveCategories(updated);
+      return updated;
+    });
+
+    // Reassign tasks using this category
+    const affectedCount = this.tasks().filter(t => t.categoryId === id).length;
+    if (affectedCount > 0) {
+      this.tasks.update(current => current.map(t => {
+        if (t.categoryId === id) {
+          return {
+            ...t,
+            categoryId: UNCATEGORIZED_CATEGORY.id,
+            category: UNCATEGORIZED_CATEGORY.name
+          };
+        }
+        return t;
+      }));
+    }
+
+    this.toast.warning(
+      'Category deleted',
+      `"${category.name}" removed${affectedCount > 0 ? ` (${affectedCount} tasks moved to Uncategorized)` : ''}`
+    );
+  }
+
+  openCategoryManager(): void {
+    this.isCategoryManagerOpen.set(true);
+  }
+
+  closeCategoryManager(): void {
+    this.isCategoryManagerOpen.set(false);
+  }
+
+  // Load tasks from backend for current week
+  loadWeekTasks(startDate?: string, endDate?: string): void {
+    const start = startDate || this.dateUtils.formatDateToISO(this.monday());
+    const end = endDate || this.dateUtils.formatDateToISO(this.sunday());
     this.isLoading.set(true);
-    this.repository.getTasks().subscribe({
+    this.error.set(null);
+
+    this.repository.getTasks(start, end).subscribe({
       next: (tasks) => {
         this.tasks.set(tasks);
         this.isLoading.set(false);
+        this.error.set(null);
       },
       error: (err) => {
-        console.error('Failed to load tasks', err);
+        const message = err?.error?.message || err?.message || 'Could not connect to Spring Boot backend API at http://localhost:8080/api/v1';
+        this.error.set(message);
         this.isLoading.set(false);
+        this.toast.error('Backend Unreachable', message);
       }
     });
   }
@@ -137,6 +253,7 @@ export class WeeklyWorkStore {
       const today = new Date();
       this.currentDate.set(today);
       this.activeMobileDay.set(this.dateUtils.formatDateToISO(today));
+      this.loadWeekTasks();
       return;
     }
 
@@ -144,14 +261,15 @@ export class WeeklyWorkStore {
     current.setDate(current.getDate() + delta);
     this.currentDate.set(current);
     
-    // Also align active mobile day to the first day of that week
     const weekMon = this.dateUtils.getMondayOfWeek(current);
     this.activeMobileDay.set(this.dateUtils.formatDateToISO(weekMon));
+    this.loadWeekTasks();
   }
 
   jumpToDate(date: Date): void {
     this.currentDate.set(new Date(date));
     this.activeMobileDay.set(this.dateUtils.formatDateToISO(date));
+    this.loadWeekTasks();
   }
 
   setActiveMobileDay(dateStr: string): void {
@@ -159,88 +277,86 @@ export class WeeklyWorkStore {
   }
 
   createTask(dto: CreateTaskDto): void {
-    const currentTasks = this.tasks();
-    const dayTasks = currentTasks.filter(t => t.date === dto.date);
+    this.isLoading.set(true);
+    const dayTasks = this.tasks().filter(t => t.date === dto.date);
     const highestOrder = dayTasks.reduce((max, t) => Math.max(max, t.order ?? 0), -1);
 
-    const newTask: Task = {
-      id: `tsk-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      title: dto.title.trim(),
-      description: dto.description?.trim() || '',
-      date: dto.date,
-      priority: dto.priority,
-      category: dto.category,
-      status: dto.status ?? 'TODO',
-      estimatedMinutes: dto.estimatedMinutes ?? 30,
-      order: highestOrder + 1,
-      tags: dto.tags || [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+    const categoryId = dto.categoryId || this.categories()[0]?.id || 'cat-work';
+    const categoryName = this.getCategoryById(categoryId).name;
+
+    const payload: CreateTaskDto = {
+      ...dto,
+      categoryId,
+      category: categoryName,
+      order: dto.order ?? (highestOrder + 1)
     };
 
-    this.tasks.update(tasks => [newTask, ...tasks]);
-    this.closeModal();
-    this.toast.success('Task created', `"${newTask.title}" added for ${newTask.date}`);
+    this.repository.createTask(payload).subscribe({
+      next: (created) => {
+        this.tasks.update(tasks => [created, ...tasks]);
+        this.closeModal();
+        this.isLoading.set(false);
+        this.toast.success('Task created', `"${created.title}" added for ${created.date}`);
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        const msg = err?.error?.message || err?.message || 'Failed to create task on server';
+        this.toast.error('Create Failed', msg);
+      }
+    });
   }
 
   updateTask(id: string, updates: UpdateTaskDto): void {
-    let updatedTitle = '';
-    this.tasks.update(tasks => {
-      return tasks.map(t => {
-        if (t.id === id) {
-          const completedAt = updates.status === 'COMPLETED' && t.status !== 'COMPLETED'
-            ? new Date().toISOString()
-            : updates.status && updates.status !== 'COMPLETED'
-              ? undefined
-              : t.completedAt;
+    this.isLoading.set(true);
+    const categoryName = updates.categoryId ? this.getCategoryById(updates.categoryId).name : updates.category;
 
-          const updated: Task = {
-            ...t,
-            ...updates,
-            completedAt,
-            updatedAt: new Date().toISOString()
-          };
-          updatedTitle = updated.title;
-          return updated;
-        }
-        return t;
-      });
+    const payload: UpdateTaskDto = {
+      ...updates,
+      category: categoryName
+    };
+
+    this.repository.updateTask(id, payload).subscribe({
+      next: (updated) => {
+        this.tasks.update(tasks => tasks.map(t => t.id === id ? updated : t));
+        this.closeModal();
+        this.isLoading.set(false);
+        this.toast.info('Task updated', `"${updated.title}" saved`);
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        const msg = err?.error?.message || err?.message || 'Failed to update task on server';
+        this.toast.error('Update Failed', msg);
+      }
     });
-
-    this.closeModal();
-    this.toast.info('Task updated', updatedTitle ? `"${updatedTitle}" saved` : undefined);
   }
 
   toggleTaskCompletion(id: string): void {
-    let newlyCompleted = false;
-    let taskTitle = '';
+    const currentTask = this.tasks().find(t => t.id === id);
+    if (!currentTask) return;
 
-    this.tasks.update(tasks => {
-      return tasks.map(t => {
-        if (t.id === id) {
-          const nextStatus = t.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
-          newlyCompleted = nextStatus === 'COMPLETED';
-          taskTitle = t.title;
-          return {
-            ...t,
-            status: nextStatus,
-            completedAt: newlyCompleted ? new Date().toISOString() : undefined,
-            updatedAt: new Date().toISOString()
-          };
+    const nextStatus = currentTask.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
+    const newlyCompleted = nextStatus === 'COMPLETED';
+    const completedAt = newlyCompleted ? new Date().toISOString() : undefined;
+
+    // Optimistic UI update
+    this.tasks.update(tasks => tasks.map(t => t.id === id ? { ...t, status: nextStatus, completedAt } : t));
+
+    this.repository.updateTask(id, { status: nextStatus, completedAt }).subscribe({
+      next: (saved) => {
+        this.tasks.update(tasks => tasks.map(t => t.id === id ? saved : t));
+        if (newlyCompleted) {
+          this.toast.success('Task completed! 🎉', saved.title);
+          const stats = this.weeklyStats();
+          if (stats.allDone) {
+            this.triggerCelebration();
+          }
         }
-        return t;
-      });
-    });
-
-    if (newlyCompleted) {
-      this.toast.success('Task completed! 🎉', taskTitle);
-      
-      // Check if all weekly tasks are now done for grand celebration
-      const stats = this.weeklyStats();
-      if (stats.allDone) {
-        this.triggerCelebration();
+      },
+      error: (err) => {
+        this.tasks.update(tasks => tasks.map(t => t.id === id ? currentTask : t));
+        this.toast.error('Status Update Failed', err?.error?.message || 'Could not persist status');
       }
-    }
+    });
   }
 
   deleteTask(id: string): void {
@@ -249,62 +365,82 @@ export class WeeklyWorkStore {
 
     this.tasks.update(tasks => tasks.filter(t => t.id !== id));
 
-    // Offer undo action in toast
-    this.toast.warning('Task deleted', `"${taskToDelete.title}" removed`, {
-      label: 'Undo',
-      run: () => {
+    this.repository.deleteTask(id).subscribe({
+      next: () => {
+        this.toast.warning('Task deleted', `"${taskToDelete.title}" removed`, {
+          label: 'Undo',
+          run: () => {
+            this.createTask({
+              title: taskToDelete.title,
+              description: taskToDelete.description,
+              date: taskToDelete.date,
+              priority: taskToDelete.priority,
+              categoryId: taskToDelete.categoryId,
+              category: taskToDelete.category,
+              status: taskToDelete.status,
+              estimatedMinutes: taskToDelete.estimatedMinutes,
+              tags: taskToDelete.tags
+            });
+          }
+        });
+      },
+      error: (err) => {
         this.tasks.update(tasks => [taskToDelete, ...tasks]);
-        this.toast.info('Restored task', `"${taskToDelete.title}" restored`);
+        this.toast.error('Delete Failed', err?.error?.message || 'Could not delete task from server');
       }
     });
   }
 
   reorderTask(taskId: string, targetDate: string, newIndex: number): void {
-    this.tasks.update(allTasks => {
-      const taskIndex = allTasks.findIndex(t => t.id === taskId);
-      if (taskIndex === -1) return allTasks;
+    const allTasks = this.tasks();
+    const taskIndex = allTasks.findIndex(t => t.id === taskId);
+    if (taskIndex === -1) return;
 
-      const task = allTasks[taskIndex];
-      const otherTasks = allTasks.filter(t => t.id !== taskId);
+    const task = allTasks[taskIndex];
+    const otherTasks = allTasks.filter(t => t.id !== taskId);
 
-      // Extract existing tasks for target date
-      const targetDayTasks = otherTasks
-        .filter(t => t.date === targetDate)
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const targetDayTasks = otherTasks
+      .filter(t => t.date === targetDate)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-      const updatedTask: Task = {
-        ...task,
-        date: targetDate,
-        updatedAt: new Date().toISOString()
-      };
+    const updatedTask: Task = {
+      ...task,
+      date: targetDate,
+      dateKey: targetDate,
+      updatedAt: new Date().toISOString()
+    };
 
-      // Insert at newIndex
-      targetDayTasks.splice(newIndex, 0, updatedTask);
+    targetDayTasks.splice(newIndex, 0, updatedTask);
+    targetDayTasks.forEach((t, idx) => {
+      t.order = idx;
+    });
 
-      // Re-assign order
-      targetDayTasks.forEach((t, idx) => {
-        t.order = idx;
-      });
+    const rest = otherTasks.filter(t => t.date !== targetDate);
+    const newTasks = [...rest, ...targetDayTasks];
+    this.tasks.set(newTasks);
 
-      const rest = otherTasks.filter(t => t.date !== targetDate);
-      return [...rest, ...targetDayTasks];
+    const reorderDtos: ReorderTaskDto[] = targetDayTasks.map(t => ({
+      id: t.id,
+      date: t.date,
+      dateKey: t.date,
+      order: t.order
+    }));
+
+    this.repository.reorderTasks(reorderDtos).subscribe({
+      next: (res) => {
+        if (Array.isArray(res) && res.length > 0) {
+          const resMap = new Map(res.map(r => [r.id, r]));
+          this.tasks.update(current => current.map(c => resMap.get(c.id) || c));
+        }
+      },
+      error: (err) => {
+        this.toast.error('Reorder Sync Failed', err?.error?.message || 'Server error syncing drag-and-drop');
+      }
     });
   }
 
   moveTaskToDay(taskId: string, targetDate: string): void {
-    this.tasks.update(tasks => {
-      return tasks.map(t => {
-        if (t.id === taskId) {
-          return {
-            ...t,
-            date: targetDate,
-            updatedAt: new Date().toISOString()
-          };
-        }
-        return t;
-      });
-    });
-
+    this.updateTask(taskId, { date: targetDate, dateKey: targetDate });
     const targetDayName = this.dateUtils.getDayName(this.dateUtils.parseISODate(targetDate));
     this.toast.info('Task moved', `Scheduled for ${targetDayName} (${targetDate})`);
   }
@@ -317,25 +453,36 @@ export class WeeklyWorkStore {
     }
 
     const todayIso = this.dateUtils.formatDateToISO(new Date());
-    const candidateIds = new Set(candidates.map(c => c.id));
+    const candidateIds = candidates.map(c => c.id);
+    const startIso = this.dateUtils.formatDateToISO(this.monday());
+    const endIso = this.dateUtils.formatDateToISO(this.sunday());
 
-    this.tasks.update(tasks => {
-      return tasks.map(t => {
-        if (candidateIds.has(t.id)) {
-          return {
-            ...t,
-            date: todayIso,
-            updatedAt: new Date().toISOString()
-          };
+    this.isLoading.set(true);
+    this.repository.carryOverTasks({
+      startDate: startIso,
+      endDate: endIso,
+      targetDate: todayIso,
+      taskIds: candidateIds
+    }).subscribe({
+      next: (rolledOver) => {
+        if (rolledOver.length > 0) {
+          const rolledMap = new Map(rolledOver.map(r => [r.id, r]));
+          this.tasks.update(current => current.map(c => rolledMap.get(c.id) || c));
+        } else {
+          const idSet = new Set(candidateIds);
+          this.tasks.update(current => current.map(t => idSet.has(t.id) ? { ...t, date: todayIso, dateKey: todayIso } : t));
         }
-        return t;
-      });
+        this.isLoading.set(false);
+        this.toast.success(
+          'Tasks rolled over',
+          `Moved ${candidates.length} incomplete ${candidates.length === 1 ? 'task' : 'tasks'} to Today (${todayIso})`
+        );
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        this.toast.error('Carry Over Failed', err?.error?.message || 'Server error carrying over tasks');
+      }
     });
-
-    this.toast.success(
-      'Tasks rolled over',
-      `Moved ${candidates.length} incomplete ${candidates.length === 1 ? 'task' : 'tasks'} to Today (${todayIso})`
-    );
   }
 
   setFilters(partial: Partial<FilterState>): void {
@@ -366,21 +513,27 @@ export class WeeklyWorkStore {
   }
 
   importTasks(imported: Task[]): void {
-    this.tasks.set(imported);
-    this.toast.success('Tasks imported', `Loaded ${imported.length} tasks successfully.`);
-  }
-
-  resetToSample(): void {
-    this.repository.resetToSampleData().subscribe({
-      next: (tasks) => {
-        this.tasks.set(tasks);
-        this.toast.success('Sample Data Loaded', 'Restored default sprint workload.');
+    this.isLoading.set(true);
+    this.repository.importTasks(imported).subscribe({
+      next: (res) => {
+        this.isLoading.set(false);
+        this.toast.success('Tasks imported', `Loaded ${res.length || imported.length} tasks successfully.`);
+        this.loadWeekTasks();
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        this.toast.error('Import Failed', err?.error?.message || 'Server error importing tasks');
       }
     });
   }
 
   private triggerCelebration(): void {
+    if (typeof document === 'undefined') return;
     try {
+      const testCanvas = document.createElement('canvas');
+      if (!testCanvas.getContext || !testCanvas.getContext('2d')) {
+        return; // Avoid jsdom missing canvas 2d context errors
+      }
       confetti({
         particleCount: 80,
         spread: 70,
@@ -412,8 +565,8 @@ export class WeeklyWorkStore {
         return false;
       }
 
-      // Category
-      if (filters.categories.length > 0 && !filters.categories.includes(t.category)) {
+      // Dynamic Category Filter by categoryId
+      if (filters.categories.length > 0 && !filters.categories.includes(t.categoryId)) {
         return false;
       }
 
