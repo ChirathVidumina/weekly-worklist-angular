@@ -9,8 +9,8 @@ spring:
     name: weekly-worklist-backend
   data:
     mongodb:
-      # MongoDB Atlas URI with URL-encoded password (%23 for # and %40 for @)
-      uri: "mongodb+srv://WeeklyList2026:I0O8N1hVNMqUTCy0@weeklylist.8k7ksvc.mongodb.net/weekly_worklist_db?retryWrites=true&w=majority"
+      # MongoDB Atlas URI (Supports MONGODB_URI environment variable override)
+      uri: ${MONGODB_URI:"mongodb+srv://WeeklyList2026:I0O8N1hVNMqUTCy0@weeklylist.8k7ksvc.mongodb.net/weekly_worklist_db?retryWrites=true&w=majority"}
       auto-index-creation: true
   jackson:
     serialization:
