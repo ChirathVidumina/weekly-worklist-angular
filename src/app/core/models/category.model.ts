@@ -6,10 +6,10 @@ export interface CategoryItem {
 }
 
 export const DEFAULT_CATEGORIES: CategoryItem[] = [
-  { id: 'cat-work', name: 'Work', color: '#3B82F6', isDefault: true },
-  { id: 'cat-study', name: 'Study', color: '#8B5CF6', isDefault: true },
-  { id: 'cat-personal', name: 'Personal', color: '#10B981', isDefault: true },
-  { id: 'cat-urgent', name: 'Urgent', color: '#EF4444', isDefault: true }
+  { id: '6af93b61992b2b1b5e5310e9', name: 'Work', color: '#3B82F6', isDefault: true },
+  { id: '6af93b61992b2b1b5e5310ea', name: 'Study', color: '#8B5CF6', isDefault: true },
+  { id: '6af93b61992b2b1b5e5310eb', name: 'Personal', color: '#10B981', isDefault: true },
+  { id: '6af93b61992b2b1b5e5310ec', name: 'Urgent', color: '#EF4444', isDefault: true }
 ];
 
 export const UNCATEGORIZED_CATEGORY: CategoryItem = {

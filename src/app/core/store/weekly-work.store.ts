@@ -121,6 +121,7 @@ export class WeeklyWorkStore {
   });
 
   constructor() {
+    this.loadCategories();
     this.loadWeekTasks();
   }
 
@@ -134,6 +135,11 @@ export class WeeklyWorkStore {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          // If stored categories have obsolete 'cat-work' style IDs, discard and load defaults/backend
+          if (parsed.some((c: CategoryItem) => c.id === 'cat-work' || c.id?.startsWith('cat-'))) {
+            localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
+            return [...DEFAULT_CATEGORIES];
+          }
           return parsed;
         }
       }
@@ -141,6 +147,20 @@ export class WeeklyWorkStore {
       console.warn('Failed to parse stored categories', e);
     }
     return [...DEFAULT_CATEGORIES];
+  }
+
+  loadCategories(): void {
+    if (this.repository.getCategories) {
+      this.repository.getCategories().subscribe({
+        next: (cats) => {
+          if (cats && cats.length > 0) {
+            this.categories.set(cats);
+            this.saveCategories(cats);
+          }
+        },
+        error: (err) => console.warn('Could not load categories from backend', err)
+      });
+    }
   }
 
   private saveCategories(categories: CategoryItem[]): void {
@@ -155,66 +175,67 @@ export class WeeklyWorkStore {
     return found || UNCATEGORIZED_CATEGORY;
   }
 
-  addCategory(name: string, color: string): CategoryItem {
+  addCategory(name: string, color: string): void {
     const trimmed = name.trim();
-    const id = `cat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    const newCategory: CategoryItem = {
-      id,
-      name: trimmed,
-      color,
-      isDefault: false
-    };
-
-    this.categories.update(current => {
-      const updated = [...current, newCategory];
-      this.saveCategories(updated);
-      return updated;
-    });
-
-    this.toast.success('Category created', `"${trimmed}" is now available.`);
-    return newCategory;
+    if (this.repository.createCategory) {
+      this.repository.createCategory({ name: trimmed, color }).subscribe({
+        next: (created) => {
+          this.categories.update(current => {
+            const updated = [...current, created];
+            this.saveCategories(updated);
+            return updated;
+          });
+          this.toast.success('Category created', `"${trimmed}" is now available.`);
+        },
+        error: (err) => {
+          const msg = err?.error?.message || err?.message || 'Could not create category';
+          this.toast.error('Category creation failed', msg);
+        }
+      });
+    }
   }
 
   updateCategory(id: string, name: string, color: string): void {
     const trimmed = name.trim();
-    this.categories.update(current => {
-      const updated = current.map(c => c.id === id ? { ...c, name: trimmed, color } : c);
-      this.saveCategories(updated);
-      return updated;
-    });
-
-    this.toast.info('Category updated', `"${trimmed}" saved.`);
+    if (this.repository.updateCategory) {
+      this.repository.updateCategory(id, { name: trimmed, color }).subscribe({
+        next: (updatedCat) => {
+          this.categories.update(current => {
+            const updated = current.map(c => c.id === id ? updatedCat : c);
+            this.saveCategories(updated);
+            return updated;
+          });
+          this.toast.info('Category updated', `"${trimmed}" saved.`);
+        },
+        error: (err) => {
+          const msg = err?.error?.message || err?.message || 'Could not update category';
+          this.toast.error('Category update failed', msg);
+        }
+      });
+    }
   }
 
   deleteCategory(id: string): void {
     const category = this.categories().find(c => c.id === id);
     if (!category) return;
 
-    this.categories.update(current => {
-      const updated = current.filter(c => c.id !== id);
-      this.saveCategories(updated);
-      return updated;
-    });
-
-    // Reassign tasks using this category
-    const affectedCount = this.tasks().filter(t => t.categoryId === id).length;
-    if (affectedCount > 0) {
-      this.tasks.update(current => current.map(t => {
-        if (t.categoryId === id) {
-          return {
-            ...t,
-            categoryId: UNCATEGORIZED_CATEGORY.id,
-            category: UNCATEGORIZED_CATEGORY.name
-          };
+    if (this.repository.deleteCategory) {
+      this.repository.deleteCategory(id).subscribe({
+        next: () => {
+          this.categories.update(current => {
+            const updated = current.filter(c => c.id !== id);
+            this.saveCategories(updated);
+            return updated;
+          });
+          this.loadWeekTasks();
+          this.toast.warning('Category deleted', `"${category.name}" removed.`);
+        },
+        error: (err) => {
+          const msg = err?.error?.message || err?.message || 'Could not delete category';
+          this.toast.error('Category deletion failed', msg);
         }
-        return t;
-      }));
+      });
     }
-
-    this.toast.warning(
-      'Category deleted',
-      `"${category.name}" removed${affectedCount > 0 ? ` (${affectedCount} tasks moved to Uncategorized)` : ''}`
-    );
   }
 
   openCategoryManager(): void {
@@ -281,7 +302,7 @@ export class WeeklyWorkStore {
     const dayTasks = this.tasks().filter(t => t.date === dto.date);
     const highestOrder = dayTasks.reduce((max, t) => Math.max(max, t.order ?? 0), -1);
 
-    const categoryId = dto.categoryId || this.categories()[0]?.id || 'cat-work';
+    const categoryId = dto.categoryId || this.categories()[0]?.id || '6af93b61992b2b1b5e5310e9';
     const categoryName = this.getCategoryById(categoryId).name;
 
     const payload: CreateTaskDto = {

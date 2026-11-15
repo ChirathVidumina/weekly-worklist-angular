@@ -25,7 +25,22 @@ public class MongoCategoryRepository : ICategoryRepository
 
     public async Task<CategoryDocument?> GetByIdAsync(string id)
     {
-        return await _collection.Find(c => c.Id == id).FirstOrDefaultAsync();
+        if (string.IsNullOrWhiteSpace(id)) return null;
+
+        if (MongoDB.Bson.ObjectId.TryParse(id, out _))
+        {
+            var byId = await _collection.Find(c => c.Id == id).FirstOrDefaultAsync();
+            if (byId != null) return byId;
+        }
+
+        // Support slug IDs like "cat-work", "cat-study", "cat-personal", "cat-urgent"
+        if (id.StartsWith("cat-", StringComparison.OrdinalIgnoreCase))
+        {
+            var name = id.Substring(4);
+            return await GetByNameAsync(name);
+        }
+
+        return await GetByNameAsync(id);
     }
 
     public async Task<CategoryDocument?> GetByNameAsync(string name)
@@ -39,7 +54,7 @@ public class MongoCategoryRepository : ICategoryRepository
         var regex = new Regex($"^{Regex.Escape(name.Trim())}$", RegexOptions.IgnoreCase);
         var filter = Builders<CategoryDocument>.Filter.Regex(c => c.Name, new MongoDB.Bson.BsonRegularExpression(regex));
 
-        if (!string.IsNullOrWhiteSpace(excludeId))
+        if (!string.IsNullOrWhiteSpace(excludeId) && MongoDB.Bson.ObjectId.TryParse(excludeId, out _))
         {
             filter &= Builders<CategoryDocument>.Filter.Ne(c => c.Id, excludeId);
         }
@@ -65,6 +80,15 @@ public class MongoCategoryRepository : ICategoryRepository
 
     public async Task<bool> DeleteAsync(string id)
     {
+        if (string.IsNullOrWhiteSpace(id)) return false;
+
+        if (!MongoDB.Bson.ObjectId.TryParse(id, out _))
+        {
+            var bySlug = await GetByIdAsync(id);
+            if (bySlug?.Id == null) return false;
+            id = bySlug.Id;
+        }
+
         var result = await _collection.DeleteOneAsync(c => c.Id == id);
         return result.DeletedCount > 0;
     }

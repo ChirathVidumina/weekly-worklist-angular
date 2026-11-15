@@ -5,6 +5,7 @@ import { WeeklyWorkStore } from './weekly-work.store';
 import { TaskRepository } from '../repositories/task-repository.interface';
 import { Priority } from '../models/priority.enum';
 import { Task, CreateTaskDto, UpdateTaskDto } from '../models/task.model';
+import { DEFAULT_CATEGORIES } from '../models/category.model';
 
 describe('WeeklyWorkStore (with Dynamic Categories & ASP.NET Core 8 REST API)', () => {
   let store: WeeklyWorkStore;
@@ -16,7 +17,7 @@ describe('WeeklyWorkStore (with Dynamic Categories & ASP.NET Core 8 REST API)', 
     date: '2026-11-15',
     dateKey: '2026-11-15',
     priority: Priority.HIGH,
-    categoryId: 'cat-work',
+    categoryId: '6af93b61992b2b1b5e5310e9',
     category: 'Work',
     status: 'TODO',
     estimatedMinutes: 45,
@@ -34,7 +35,7 @@ describe('WeeklyWorkStore (with Dynamic Categories & ASP.NET Core 8 REST API)', 
         date: dto.date,
         dateKey: dto.dateKey || dto.date,
         priority: dto.priority,
-        categoryId: dto.categoryId || 'cat-work',
+        categoryId: dto.categoryId || '6af93b61992b2b1b5e5310e9',
         category: dto.category || 'Work',
         status: dto.status || 'TODO',
         estimatedMinutes: dto.estimatedMinutes || 30,
@@ -50,7 +51,11 @@ describe('WeeklyWorkStore (with Dynamic Categories & ASP.NET Core 8 REST API)', 
       deleteTask: vi.fn().mockReturnValue(of(void 0)),
       reorderTasks: vi.fn().mockReturnValue(of(void 0)),
       carryOverTasks: vi.fn().mockReturnValue(of([])),
-      importTasks: vi.fn().mockReturnValue(of([]))
+      importTasks: vi.fn().mockReturnValue(of([])),
+      getCategories: vi.fn().mockReturnValue(of([...DEFAULT_CATEGORIES])),
+      createCategory: vi.fn().mockImplementation((c: any) => of({ id: '6af93b61992b2b1b5e5310ef', ...c })),
+      updateCategory: vi.fn().mockImplementation((id: string, c: any) => of({ id, ...c })),
+      deleteCategory: vi.fn().mockReturnValue(of(void 0))
     };
 
     TestBed.configureTestingModule({
@@ -73,25 +78,26 @@ describe('WeeklyWorkStore (with Dynamic Categories & ASP.NET Core 8 REST API)', 
 
   it('should initialize with default dynamic categories', () => {
     expect(store.categories().length).toBeGreaterThanOrEqual(4);
-    const workCat = store.getCategoryById('cat-work');
+    const workCat = store.getCategoryById('6af93b61992b2b1b5e5310e9');
     expect(workCat.name).toBe('Work');
   });
 
   it('should create, update, and delete custom categories', () => {
     // 1. Create custom category
-    const created = store.addCategory('Cricket Practice', '#10B981');
-    expect(created.id).toBeTruthy();
-    expect(store.categories().some(c => c.id === created.id)).toBe(true);
+    store.addCategory('Cricket Practice', '#10B981');
+    const created = store.categories().find(c => c.name === 'Cricket Practice');
+    expect(created).toBeDefined();
+    expect(created!.id).toBeTruthy();
 
     // 2. Update category
-    store.updateCategory(created.id, 'Cricket Training', '#06B6D4');
-    const updated = store.getCategoryById(created.id);
+    store.updateCategory(created!.id, 'Cricket Training', '#06B6D4');
+    const updated = store.getCategoryById(created!.id);
     expect(updated.name).toBe('Cricket Training');
     expect(updated.color).toBe('#06B6D4');
 
     // 3. Delete category
-    store.deleteCategory(created.id);
-    expect(store.categories().some(c => c.id === created.id)).toBe(false);
+    store.deleteCategory(created!.id);
+    expect(store.categories().some(c => c.id === created!.id)).toBe(false);
   });
 
   it('should fallback to Uncategorized for nonexistent category IDs', () => {
@@ -113,7 +119,7 @@ describe('WeeklyWorkStore (with Dynamic Categories & ASP.NET Core 8 REST API)', 
       title: 'New API endpoint',
       date: '2026-11-15',
       priority: Priority.URGENT,
-      categoryId: 'cat-work',
+      categoryId: '6af93b61992b2b1b5e5310e9',
       estimatedMinutes: 60
     });
 

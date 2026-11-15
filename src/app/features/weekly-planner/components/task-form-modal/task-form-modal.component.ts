@@ -241,7 +241,7 @@ export class TaskFormModalComponent {
   editingTaskId: string | null = null;
 
   constructor() {
-    const defaultCatId = this.store.categories()[0]?.id || 'cat-work';
+    const defaultCatId = this.store.categories()[0]?.id || '6af93b61992b2b1b5e5310e9';
 
     this.form = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
@@ -258,7 +258,7 @@ export class TaskFormModalComponent {
     effect(() => {
       const task = this.store.editingTask();
       const preselectedDate = this.store.modalPreselectedDate();
-      const firstCatId = this.store.categories()[0]?.id || 'cat-work';
+      const firstCatId = this.store.categories()[0]?.id || '6af93b61992b2b1b5e5310e9';
 
       if (task) {
         this.isEditing = true;

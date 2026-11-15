@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { Task, CreateTaskDto, UpdateTaskDto, ReorderTaskDto, CarryOverRequestDto } from '../models/task.model';
+import { CategoryItem } from '../models/category.model';
 import { TaskRepository } from './task-repository.interface';
 import { environment } from '../../../environments/environment';
 
@@ -11,6 +12,23 @@ import { environment } from '../../../environments/environment';
 export class HttpTaskRepository implements TaskRepository {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/tasks`;
+  private readonly categoriesUrl = `${environment.apiUrl}/categories`;
+
+  getCategories(): Observable<CategoryItem[]> {
+    return this.http.get<CategoryItem[]>(this.categoriesUrl);
+  }
+
+  createCategory(category: { name: string; color: string }): Observable<CategoryItem> {
+    return this.http.post<CategoryItem>(this.categoriesUrl, category);
+  }
+
+  updateCategory(id: string, category: { name: string; color: string }): Observable<CategoryItem> {
+    return this.http.put<CategoryItem>(`${this.categoriesUrl}/${id}`, category);
+  }
+
+  deleteCategory(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.categoriesUrl}/${id}`);
+  }
 
   getTasks(startDate?: string, endDate?: string): Observable<Task[]> {
     let params = new HttpParams();
@@ -104,7 +122,7 @@ export class HttpTaskRepository implements TaskRepository {
 
   private normalizeTask(raw: any): Task {
     const date = raw.date || raw.dateKey || new Date().toISOString().split('T')[0];
-    const categoryId = raw.categoryId || (raw.category ? `cat-${raw.category.toLowerCase()}` : 'cat-work');
+    const categoryId = raw.categoryId || '6af93b61992b2b1b5e5310e9';
     return {
       id: String(raw.id),
       title: raw.title || '',
@@ -113,7 +131,7 @@ export class HttpTaskRepository implements TaskRepository {
       dateKey: raw.dateKey || date,
       priority: raw.priority || 'MEDIUM',
       categoryId,
-      category: raw.category || categoryId,
+      category: raw.category || raw.categoryName || 'Work',
       status: raw.status || 'TODO',
       estimatedMinutes: Number(raw.estimatedMinutes) || 0,
       order: Number(raw.order) ?? 0,

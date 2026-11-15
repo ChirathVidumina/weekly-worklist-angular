@@ -46,13 +46,18 @@ public class MongoTaskRepository : ITaskRepository
 
     public async Task<TaskDocument?> GetByIdAsync(string id)
     {
+        if (string.IsNullOrWhiteSpace(id) || !MongoDB.Bson.ObjectId.TryParse(id, out _))
+        {
+            return null;
+        }
         return await _collection.Find(t => t.Id == id).FirstOrDefaultAsync();
     }
 
     public async Task<List<TaskDocument>> GetByIdsAsync(IEnumerable<string> ids)
     {
-        var idList = ids.ToList();
-        var filter = Builders<TaskDocument>.Filter.In(t => t.Id, idList);
+        var validIds = ids.Where(i => !string.IsNullOrWhiteSpace(i) && MongoDB.Bson.ObjectId.TryParse(i, out _)).ToList();
+        if (validIds.Count == 0) return new List<TaskDocument>();
+        var filter = Builders<TaskDocument>.Filter.In(t => t.Id, validIds);
         return await _collection.Find(filter).ToListAsync();
     }
 
@@ -67,12 +72,19 @@ public class MongoTaskRepository : ITaskRepository
     public async Task<TaskDocument> UpdateAsync(TaskDocument task)
     {
         task.UpdatedAt = DateTime.UtcNow;
-        await _collection.ReplaceOneAsync(t => t.Id == task.Id, task);
+        if (!string.IsNullOrWhiteSpace(task.Id) && MongoDB.Bson.ObjectId.TryParse(task.Id, out _))
+        {
+            await _collection.ReplaceOneAsync(t => t.Id == task.Id, task);
+        }
         return task;
     }
 
     public async Task<bool> DeleteAsync(string id)
     {
+        if (string.IsNullOrWhiteSpace(id) || !MongoDB.Bson.ObjectId.TryParse(id, out _))
+        {
+            return false;
+        }
         var result = await _collection.DeleteOneAsync(t => t.Id == id);
         return result.DeletedCount > 0;
     }

@@ -49,7 +49,7 @@ public class TaskService : ITaskService
     public async Task<TaskResponseDto> CreateTaskAsync(TaskRequestDto request)
     {
         var dateKey = request.GetEffectiveDateKey();
-        var categoryName = await ResolveCategoryNameAsync(request.CategoryId, request.Category);
+        var (resolvedCategoryId, categoryName) = await ResolveCategoryAsync(request.CategoryId, request.Category);
 
         var order = request.Order ?? 0;
         if (request.Order == null || request.Order == 0)
@@ -64,7 +64,7 @@ public class TaskService : ITaskService
             Description = request.Description,
             DateKey = dateKey,
             Priority = request.Priority,
-            CategoryId = request.CategoryId,
+            CategoryId = resolvedCategoryId,
             CategoryName = categoryName,
             Status = string.IsNullOrWhiteSpace(request.Status) ? "TODO" : request.Status.ToUpperInvariant(),
             EstimatedMinutes = request.EstimatedMinutes,
@@ -96,14 +96,14 @@ public class TaskService : ITaskService
         existing.DateKey = request.GetEffectiveDateKey();
         existing.Priority = request.Priority;
 
-        if (!string.IsNullOrWhiteSpace(request.CategoryId))
+        if (!string.IsNullOrWhiteSpace(request.CategoryId) || !string.IsNullOrWhiteSpace(request.Category))
         {
-            existing.CategoryId = request.CategoryId;
-            existing.CategoryName = await ResolveCategoryNameAsync(request.CategoryId, request.Category);
-        }
-        else if (!string.IsNullOrWhiteSpace(request.Category))
-        {
-            existing.CategoryName = request.Category;
+            var (resolvedId, resolvedName) = await ResolveCategoryAsync(
+                string.IsNullOrWhiteSpace(request.CategoryId) ? existing.CategoryId : request.CategoryId,
+                string.IsNullOrWhiteSpace(request.Category) ? existing.CategoryName : request.Category
+            );
+            existing.CategoryId = resolvedId;
+            existing.CategoryName = resolvedName;
         }
 
         existing.Status = newStatus;
@@ -217,14 +217,14 @@ public class TaskService : ITaskService
         var documents = new List<TaskDocument>();
         foreach (var req in taskList)
         {
-            var categoryName = await ResolveCategoryNameAsync(req.CategoryId, req.Category);
+            var (resolvedCatId, categoryName) = await ResolveCategoryAsync(req.CategoryId, req.Category);
             var doc = new TaskDocument
             {
                 Title = req.Title.Trim(),
                 Description = req.Description,
                 DateKey = req.GetEffectiveDateKey(),
                 Priority = req.Priority,
-                CategoryId = req.CategoryId,
+                CategoryId = resolvedCatId,
                 CategoryName = categoryName,
                 Status = string.IsNullOrWhiteSpace(req.Status) ? "TODO" : req.Status.ToUpperInvariant(),
                 EstimatedMinutes = req.EstimatedMinutes,
@@ -246,23 +246,29 @@ public class TaskService : ITaskService
         return saved.Select(MapToResponseDto).ToList();
     }
 
-    private async Task<string> ResolveCategoryNameAsync(string? categoryId, string? fallbackCategoryName)
+    private async Task<(string? CategoryId, string CategoryName)> ResolveCategoryAsync(string? categoryId, string? fallbackCategoryName)
     {
         if (!string.IsNullOrWhiteSpace(categoryId))
         {
             var category = await _categoryRepository.GetByIdAsync(categoryId);
             if (category != null)
             {
-                return category.Name;
+                return (category.Id, category.Name);
             }
         }
 
         if (!string.IsNullOrWhiteSpace(fallbackCategoryName))
         {
-            return fallbackCategoryName;
+            var category = await _categoryRepository.GetByNameAsync(fallbackCategoryName);
+            if (category != null)
+            {
+                return (category.Id, category.Name);
+            }
+            return (null, fallbackCategoryName);
         }
 
-        return "Work";
+        var defaultCat = await _categoryRepository.GetByNameAsync("Work");
+        return (defaultCat?.Id, defaultCat?.Name ?? "Work");
     }
 
     private static TaskResponseDto MapToResponseDto(TaskDocument doc) => new()
