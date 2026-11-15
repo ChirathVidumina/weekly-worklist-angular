@@ -7,7 +7,7 @@ export interface Task {
   title: string;
   description?: string;
   date: string; // ISO date format YYYY-MM-DD
-  dateKey?: string; // Spring Boot backend field compatibility
+  dateKey?: string; // ASP.NET Core 8 Web API field compatibility
   priority: Priority;
   categoryId: string; // Dynamic user-managed category ID
   category?: string; // Fallback string for backend compatibility

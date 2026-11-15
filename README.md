@@ -1,59 +1,54 @@
-# WeeklyPlan
+# Cadence — Enterprise Weekly Work List Planner
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.7.
+A production-grade weekly sprint and work-list planner inspired by Linear and Notion.
 
-## Development server
+## Architecture
 
-To start a local development server, run:
+- **Frontend (`src/`):** Angular 22 (Standalone Components, Signals, Reactive Form Modals, Tailwind CSS v4, CDK Drag & Drop).
+- **Backend (`WeeklyWorklist.Api/`):** ASP.NET Core 8 Web API, C# 12, `MongoDB.Driver` 2.30, Swagger/OpenAPI.
+- **Database:** MongoDB Atlas Cloud Database (`weekly_worklist_db`).
+- **Cloud Deployment:** Vercel (Angular SPA) + Render (ASP.NET Core 8 multi-stage Docker container).
 
-```bash
-ng serve
-```
+---
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Getting Started
 
-## Code scaffolding
+### 1. Run ASP.NET Core 8 Backend
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Ensure .NET 8 SDK is installed:
 
 ```bash
-ng generate --help
+cd WeeklyWorklist.Api
+dotnet run
 ```
 
-## Building
+- REST API Root: `http://localhost:8080/`
+- API Endpoints: `http://localhost:8080/api/v1/tasks`, `http://localhost:8080/api/v1/categories`
+- Interactive OpenAPI / Swagger UI: `http://localhost:8080/swagger`
 
-To build the project run:
+### 2. Run Angular Frontend
 
 ```bash
-ng build
+npm install
+npm start
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Navigate to `http://localhost:4200/`.
 
-## Running unit tests
+---
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Testing & Quality Assurance
 
+### Run Unit Tests
 ```bash
-ng test
+npm test
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
+### Build Production Artifacts
 ```bash
-ng e2e
+# Frontend
+npm run build
+
+# Backend
+cd WeeklyWorklist.Api && dotnet build -c Release
 ```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

@@ -63,7 +63,7 @@ describe('WeeklyWorkStore (with Dynamic Categories & ASP.NET Core 8 REST API)', 
     store = TestBed.inject(WeeklyWorkStore);
   });
 
-  it('should initialize and fetch tasks from Spring Boot repository', () => {
+  it('should initialize and fetch tasks from ASP.NET Core repository', () => {
     expect(store).toBeTruthy();
     expect(mockRepo.getTasks).toHaveBeenCalled();
     expect(store.tasks().length).toBe(1);

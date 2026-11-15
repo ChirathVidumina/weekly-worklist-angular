@@ -39,18 +39,25 @@ testem.log
 /typings
 __screenshots__/
 
-# Backend Maven
-/backend/target/
-backend/target/
-*.jar
-*.war
+# .NET 8 / ASP.NET Core Web API
+bin/
+obj/
+publish/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.dotnet/
+appsettings.Development.json
+*.DotSettings.user
 
 # Environment & Secrets
 .env
 *.env
 .env.local
 .env.*.local
-qa_results_backend.json
 
 # System files
 .DS_Store
