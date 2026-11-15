@@ -239,7 +239,7 @@ export class WeeklyWorkStore {
         this.error.set(null);
       },
       error: (err) => {
-        const message = err?.error?.message || err?.message || 'Could not connect to Spring Boot backend API at http://localhost:8080/api/v1';
+        const message = err?.error?.message || err?.message || 'Could not connect to ASP.NET Core backend API at http://localhost:8080/api/v1';
         this.error.set(message);
         this.isLoading.set(false);
         this.toast.error('Backend Unreachable', message);

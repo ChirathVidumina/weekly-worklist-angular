@@ -6,7 +6,7 @@ import { TaskRepository } from '../repositories/task-repository.interface';
 import { Priority } from '../models/priority.enum';
 import { Task, CreateTaskDto, UpdateTaskDto } from '../models/task.model';
 
-describe('WeeklyWorkStore (with Dynamic Categories & Spring Boot REST API)', () => {
+describe('WeeklyWorkStore (with Dynamic Categories & ASP.NET Core 8 REST API)', () => {
   let store: WeeklyWorkStore;
   let mockRepo: any;
 

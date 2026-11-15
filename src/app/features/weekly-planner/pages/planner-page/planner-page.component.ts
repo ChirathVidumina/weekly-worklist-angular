@@ -96,7 +96,7 @@ import { ToastContainerComponent } from '../../../../shared/ui/toast-container/t
             <span>Syncing REST API...</span>
           } @else {
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Spring Boot Connected (http://localhost:8080)</span>
+            <span>ASP.NET Core 8 Connected (http://localhost:8080)</span>
           }
         </div>
       </footer>
