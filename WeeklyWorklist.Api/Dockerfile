@@ -14,6 +14,11 @@ RUN dotnet publish "WeeklyWorklist.Api.csproj" -c Release -o /app/publish /p:Use
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS final
 WORKDIR /app
 
+# Install ICU libraries required by .NET globalization & MongoDB.Driver
+RUN apk add --no-cache icu-libs
+
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+
 # Non-root user for container security best practices
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
