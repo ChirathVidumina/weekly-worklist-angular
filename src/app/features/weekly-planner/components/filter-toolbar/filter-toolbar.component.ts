@@ -2,7 +2,6 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WeeklyWorkStore } from '../../../../core/store';
 import { Priority, PRIORITY_METADATA } from '../../../../core/models/priority.enum';
-import { Category, CATEGORY_METADATA } from '../../../../core/models/category.enum';
 import { StatusFilter } from '../../../../core/models/filter-state.model';
 
 @Component({
@@ -69,24 +68,36 @@ import { StatusFilter } from '../../../../core/models/filter-state.model';
 
           <div class="w-px h-5 bg-slate-200 dark:bg-slate-800 hidden md:block"></div>
 
-          <!-- Category Pills -->
+          <!-- Dynamic Categories Pills -->
           <div class="hidden lg:flex items-center gap-1.5">
             <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 mr-1">
               Category:
             </span>
-            @for (cat of categories; track cat.key) {
+            @for (cat of store.categories(); track cat.id) {
               <button
                 type="button"
-                (click)="toggleCategory(cat.key)"
-                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border transition-all cursor-pointer focus:outline-none select-none"
-                [ngClass]="isCategorySelected(cat.key)
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                  : 'bg-white/60 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'"
+                (click)="toggleCategory(cat.id)"
+                class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium border transition-all cursor-pointer focus:outline-none select-none"
+                [style.borderColor]="isCategorySelected(cat.id) ? cat.color : undefined"
+                [style.backgroundColor]="isCategorySelected(cat.id) ? (cat.color + '20') : undefined"
+                [style.color]="isCategorySelected(cat.id) ? cat.color : undefined"
+                [ngClass]="!isCategorySelected(cat.id) ? 'bg-white/60 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700' : 'shadow-2xs font-semibold'"
               >
-                <span class="w-1.5 h-1.5 rounded-full" [style.backgroundColor]="cat.dotColor"></span>
-                <span>{{ cat.label }}</span>
+                <span class="w-1.5 h-1.5 rounded-full" [style.backgroundColor]="cat.color"></span>
+                <span>{{ cat.name }}</span>
               </button>
             }
+            <button
+              type="button"
+              (click)="store.openCategoryManager()"
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+              title="Manage Categories"
+            >
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Manage</span>
+            </button>
           </div>
 
         </div>
@@ -124,8 +135,6 @@ export class FilterToolbarComponent {
     PRIORITY_METADATA[Priority.LOW]
   ];
 
-  readonly categories = Object.values(CATEGORY_METADATA);
-
   setStatus(status: StatusFilter): void {
     this.store.setFilters({ status });
   }
@@ -142,15 +151,15 @@ export class FilterToolbarComponent {
     this.store.setFilters({ priorities: next });
   }
 
-  isCategorySelected(cat: Category): boolean {
-    return this.store.filters().categories.includes(cat);
+  isCategorySelected(catId: string): boolean {
+    return this.store.filters().categories.includes(catId);
   }
 
-  toggleCategory(cat: Category): void {
+  toggleCategory(catId: string): void {
     const current = this.store.filters().categories;
-    const next = current.includes(cat)
-      ? current.filter(x => x !== cat)
-      : [...current, cat];
+    const next = current.includes(catId)
+      ? current.filter(x => x !== catId)
+      : [...current, catId];
     this.store.setFilters({ categories: next });
   }
 }

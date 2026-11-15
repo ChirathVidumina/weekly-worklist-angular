@@ -2,7 +2,7 @@ import { Component, Input, inject, ChangeDetectionStrategy } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { Task } from '../../../../core/models/task.model';
 import { Priority, PRIORITY_METADATA } from '../../../../core/models/priority.enum';
-import { Category, CATEGORY_METADATA } from '../../../../core/models/category.enum';
+import { CategoryItem } from '../../../../core/models/category.model';
 import { WeeklyWorkStore } from '../../../../core/store';
 import { DurationFormatPipe } from '../../../../shared/pipes/duration-format.pipe';
 import { DateUtilsService } from '../../../../core/services/date-utils.service';
@@ -143,16 +143,18 @@ import { DateUtilsService } from '../../../../core/services/date-utils.service';
           </div>
         </div>
 
-        <!-- Bottom Metadata Row: Category Tag, Time Estimate, Tags -->
+        <!-- Bottom Metadata Row: Dynamic Category Tag, Time Estimate, Tags -->
         <div class="flex items-center flex-wrap gap-1.5 mt-2.5 pt-2 border-t border-slate-100/80 dark:border-slate-800/60">
           
-          <!-- Category Tag -->
+          <!-- Dynamic Category Tag -->
           <span
-            class="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border"
-            [ngClass]="categoryMeta.badgeBg"
+            class="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border transition-colors"
+            [style.borderColor]="categoryItem.color + '40'"
+            [style.backgroundColor]="categoryItem.color + '15'"
+            [style.color]="categoryItem.color"
           >
-            <span class="w-1.5 h-1.5 rounded-full" [style.backgroundColor]="categoryMeta.dotColor"></span>
-            {{ categoryMeta.label }}
+            <span class="w-1.5 h-1.5 rounded-full" [style.backgroundColor]="categoryItem.color"></span>
+            {{ categoryItem.name }}
           </span>
 
           <!-- Time Estimate Pill -->
@@ -188,8 +190,8 @@ export class TaskCardComponent {
     return PRIORITY_METADATA[this.task.priority] || PRIORITY_METADATA[Priority.MEDIUM];
   }
 
-  get categoryMeta() {
-    return CATEGORY_METADATA[this.task.category] || CATEGORY_METADATA[Category.ENGINEERING];
+  get categoryItem(): CategoryItem {
+    return this.store.getCategoryById(this.task.categoryId);
   }
 
   onToggle(event: MouseEvent): void {
@@ -232,6 +234,7 @@ export class TaskCardComponent {
       description: this.task.description,
       date: this.task.date,
       priority: this.task.priority,
+      categoryId: this.task.categoryId,
       category: this.task.category,
       estimatedMinutes: this.task.estimatedMinutes,
       tags: this.task.tags

@@ -7,6 +7,7 @@ import { FilterToolbarComponent } from '../../components/filter-toolbar/filter-t
 import { DesktopWeekBoardComponent } from '../../components/desktop-week-board/desktop-week-board.component';
 import { MobileDayViewComponent } from '../../components/mobile-day-view/mobile-day-view.component';
 import { TaskFormModalComponent } from '../../components/task-form-modal/task-form-modal.component';
+import { CategoryManagerModalComponent } from '../../components/category-manager-modal/category-manager-modal.component';
 import { ToastContainerComponent } from '../../../../shared/ui/toast-container/toast-container.component';
 
 @Component({
@@ -20,6 +21,7 @@ import { ToastContainerComponent } from '../../../../shared/ui/toast-container/t
     DesktopWeekBoardComponent,
     MobileDayViewComponent,
     TaskFormModalComponent,
+    CategoryManagerModalComponent,
     ToastContainerComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -101,6 +103,9 @@ import { ToastContainerComponent } from '../../../../shared/ui/toast-container/t
 
       <!-- Task Form Modal (Create / Edit) -->
       <app-task-form-modal />
+
+      <!-- Custom Category Manager Modal -->
+      <app-category-manager-modal />
 
       <!-- Toast Notifications Container -->
       <app-toast-container />

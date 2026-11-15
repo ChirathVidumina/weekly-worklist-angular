@@ -1,9 +1,8 @@
-import { Component, inject, OnInit, OnDestroy, ChangeDetectionStrategy, effect } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { WeeklyWorkStore } from '../../../../core/store';
 import { Priority, PRIORITY_METADATA } from '../../../../core/models/priority.enum';
-import { Category, CATEGORY_METADATA } from '../../../../core/models/category.enum';
 import { TaskStatus } from '../../../../core/models/task.model';
 import { ModalDialogComponent } from '../../../../shared/ui/modal-dialog/modal-dialog.component';
 import { ButtonComponent } from '../../../../shared/ui/button/button.component';
@@ -116,15 +115,27 @@ import { AutoFocusDirective } from '../../../../shared/directives/auto-focus.dir
           
           <!-- Category -->
           <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Category
-            </label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Category
+              </label>
+              <button
+                type="button"
+                (click)="store.openCategoryManager()"
+                class="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                + New Category
+              </button>
+            </div>
             <select
-              formControlName="category"
-              class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+              formControlName="categoryId"
+              class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all cursor-pointer"
             >
-              @for (cat of categories; track cat.key) {
-                <option [value]="cat.key">{{ cat.label }}</option>
+              @for (cat of store.categories(); track cat.id) {
+                <option [value]="cat.id">{{ cat.name }}</option>
               }
             </select>
           </div>
@@ -216,8 +227,6 @@ export class TaskFormModalComponent {
     PRIORITY_METADATA[Priority.LOW]
   ];
 
-  readonly categories = Object.values(CATEGORY_METADATA);
-
   readonly durationChips = [
     { label: '15m', value: 15 },
     { label: '30m', value: 30 },
@@ -232,12 +241,14 @@ export class TaskFormModalComponent {
   editingTaskId: string | null = null;
 
   constructor() {
+    const defaultCatId = this.store.categories()[0]?.id || 'cat-work';
+
     this.form = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
       description: [''],
       date: ['', Validators.required],
       priority: [Priority.MEDIUM, Validators.required],
-      category: [Category.ENGINEERING, Validators.required],
+      categoryId: [defaultCatId, Validators.required],
       status: ['TODO', Validators.required],
       estimatedMinutes: [30, [Validators.min(5)]],
       tagsInput: ['']
@@ -247,6 +258,7 @@ export class TaskFormModalComponent {
     effect(() => {
       const task = this.store.editingTask();
       const preselectedDate = this.store.modalPreselectedDate();
+      const firstCatId = this.store.categories()[0]?.id || 'cat-work';
 
       if (task) {
         this.isEditing = true;
@@ -256,7 +268,7 @@ export class TaskFormModalComponent {
           description: task.description || '',
           date: task.date,
           priority: task.priority,
-          category: task.category,
+          categoryId: task.categoryId || firstCatId,
           status: task.status,
           estimatedMinutes: task.estimatedMinutes || 30,
           tagsInput: (task.tags || []).join(', ')
@@ -269,7 +281,7 @@ export class TaskFormModalComponent {
           description: '',
           date: preselectedDate || new Date().toISOString().split('T')[0],
           priority: Priority.MEDIUM,
-          category: Category.ENGINEERING,
+          categoryId: firstCatId,
           status: 'TODO',
           estimatedMinutes: 30,
           tagsInput: ''
@@ -311,7 +323,7 @@ export class TaskFormModalComponent {
         description: val.description?.trim(),
         date: val.date,
         priority: val.priority,
-        category: val.category,
+        categoryId: val.categoryId,
         status: val.status as TaskStatus,
         estimatedMinutes: Number(val.estimatedMinutes) || 30,
         tags
@@ -322,7 +334,7 @@ export class TaskFormModalComponent {
         description: val.description?.trim(),
         date: val.date,
         priority: val.priority,
-        category: val.category,
+        categoryId: val.categoryId,
         status: val.status as TaskStatus,
         estimatedMinutes: Number(val.estimatedMinutes) || 30,
         tags

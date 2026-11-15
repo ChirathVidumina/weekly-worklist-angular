@@ -4,7 +4,6 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { HttpTaskRepository } from './http-task.repository';
 import { environment } from '../../../environments/environment';
 import { Priority } from '../models/priority.enum';
-import { Category } from '../models/category.enum';
 
 describe('HttpTaskRepository', () => {
   let repository: HttpTaskRepository;
@@ -30,13 +29,14 @@ describe('HttpTaskRepository', () => {
 
   it('should fetch tasks for a date range with query parameters', () => {
     const mockTasks = [
-      { id: '1', title: 'Task 1', date: '2026-11-09', priority: 'HIGH', category: 'ENGINEERING', status: 'TODO' }
+      { id: '1', title: 'Task 1', date: '2026-11-09', priority: 'HIGH', categoryId: 'cat-work', category: 'Work', status: 'TODO' }
     ];
 
     repository.getTasks('2026-11-09', '2026-11-15').subscribe(tasks => {
       expect(tasks.length).toBe(1);
       expect(tasks[0].id).toBe('1');
       expect(tasks[0].title).toBe('Task 1');
+      expect(tasks[0].categoryId).toBe('cat-work');
     });
 
     const req = httpMock.expectOne(`${baseUrl}?startDate=2026-11-09&endDate=2026-11-15`);
@@ -49,7 +49,8 @@ describe('HttpTaskRepository', () => {
       title: 'New Sprint Task',
       date: '2026-11-15',
       priority: Priority.URGENT,
-      category: Category.PRODUCT,
+      categoryId: 'cat-work',
+      category: 'Work',
       estimatedMinutes: 30
     };
 
@@ -74,7 +75,7 @@ describe('HttpTaskRepository', () => {
 
     const req = httpMock.expectOne(`${baseUrl}/1`);
     expect(req.request.method).toBe('PUT');
-    req.flush({ id: '1', date: '2026-11-15', ...updates });
+    req.flush({ id: '1', date: '2026-11-15', categoryId: 'cat-work', ...updates });
   });
 
   it('should batch reorder tasks via PATCH', () => {
@@ -116,7 +117,7 @@ describe('HttpTaskRepository', () => {
 
   it('should bulk import tasks via POST', () => {
     const importList = [
-      { id: '1', title: 'Task 1', date: '2026-11-15', priority: Priority.LOW, category: Category.PERSONAL, status: 'TODO' as const, estimatedMinutes: 15, order: 0, createdAt: '', updatedAt: '' }
+      { id: '1', title: 'Task 1', date: '2026-11-15', priority: Priority.LOW, categoryId: 'cat-personal', category: 'Personal', status: 'TODO' as const, estimatedMinutes: 15, order: 0, createdAt: '', updatedAt: '' }
     ];
 
     repository.importTasks(importList).subscribe(tasks => {

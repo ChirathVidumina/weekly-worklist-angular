@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Task } from '../models/task.model';
 import { Priority } from '../models/priority.enum';
-import { Category } from '../models/category.enum';
 
 export interface ExportData {
   version: string;
@@ -41,13 +40,14 @@ export class ExportImportService {
   }
 
   exportToCsv(tasks: Task[], filenamePrefix = 'cadence-tasks'): void {
-    const headers = ['ID', 'Title', 'Date', 'Priority', 'Category', 'Status', 'EstimatedMinutes', 'Tags', 'Description'];
+    const headers = ['ID', 'Title', 'Date', 'Priority', 'CategoryID', 'Category', 'Status', 'EstimatedMinutes', 'Tags', 'Description'];
     const rows = tasks.map(t => [
       t.id,
       `"${(t.title || '').replace(/"/g, '""')}"`,
       t.date,
       t.priority,
-      t.category,
+      t.categoryId,
+      `"${(t.category || '').replace(/"/g, '""')}"`,
       t.status,
       t.estimatedMinutes,
       `"${(t.tags || []).join(';')}"`,
@@ -87,7 +87,6 @@ export class ExportImportService {
 
     const validatedTasks: Task[] = [];
     const validPriorities = Object.values(Priority);
-    const validCategories = Object.values(Category);
 
     for (let i = 0; i < rawTasks.length; i++) {
       const item = rawTasks[i];
@@ -99,7 +98,8 @@ export class ExportImportService {
       const date = item.date && dateRegex.test(item.date) ? item.date : new Date().toISOString().split('T')[0];
 
       const priority = validPriorities.includes(item.priority) ? item.priority : Priority.MEDIUM;
-      const category = validCategories.includes(item.category) ? item.category : Category.ENGINEERING;
+      const categoryId = item.categoryId || (item.category ? `cat-${item.category.toLowerCase()}` : 'cat-work');
+      const category = item.category || 'Work';
       const status = item.status === 'COMPLETED' || item.status === 'IN_PROGRESS' || item.status === 'TODO'
         ? item.status
         : 'TODO';
@@ -109,7 +109,9 @@ export class ExportImportService {
         title: item.title.trim(),
         description: item.description?.trim() || '',
         date,
+        dateKey: item.dateKey || date,
         priority,
+        categoryId,
         category,
         status,
         estimatedMinutes: Number(item.estimatedMinutes) || 30,

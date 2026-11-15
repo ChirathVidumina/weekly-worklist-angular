@@ -1,0 +1,4 @@
+com/vidumina/worklist/controller/CategoryControllerTest.class
+com/vidumina/worklist/controller/TaskControllerTest.class
+com/vidumina/worklist/service/CategoryServiceTest.class
+com/vidumina/worklist/service/TaskServiceTest.class

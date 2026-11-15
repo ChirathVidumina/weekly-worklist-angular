@@ -1,0 +1,31 @@
+server:
+  port: 8080
+  compression:
+    enabled: true
+    mime-types: application/json,text/plain,text/css,application/javascript
+
+spring:
+  application:
+    name: weekly-worklist-backend
+  data:
+    mongodb:
+      # MongoDB Atlas URI with URL-encoded password (%23 for # and %40 for @)
+      uri: "mongodb+srv://WeeklyList2026:I0O8N1hVNMqUTCy0@weeklylist.8k7ksvc.mongodb.net/weekly_worklist_db?retryWrites=true&w=majority"
+      auto-index-creation: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+
+logging:
+  level:
+    root: INFO
+    com.vidumina.worklist: DEBUG
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
