@@ -25,13 +25,14 @@ export class ThemeService {
     this.currentTheme.set(mode);
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem(STORAGE_KEYS.THEME, mode);
+      localStorage.setItem('theme', mode);
     }
   }
 
   private getInitialTheme(): ThemeMode {
     if (typeof window === 'undefined') return 'dark';
 
-    const saved = localStorage.getItem(STORAGE_KEYS.THEME) as ThemeMode;
+    const saved = (localStorage.getItem(STORAGE_KEYS.THEME) || localStorage.getItem('theme')) as ThemeMode;
     if (saved === 'dark' || saved === 'light') {
       return saved;
     }
@@ -51,5 +52,7 @@ export class ThemeService {
     } else {
       root.classList.remove('dark');
     }
+    root.setAttribute('data-theme', mode);
+    root.style.colorScheme = mode;
   }
 }

@@ -53,7 +53,7 @@ import { AutoFocusDirective } from '../../../../shared/directives/auto-focus.dir
             <input
               type="date"
               formControlName="date"
-              class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
             />
           </div>
 
@@ -68,17 +68,17 @@ import { AutoFocusDirective } from '../../../../shared/directives/auto-focus.dir
                 min="5"
                 step="5"
                 formControlName="estimatedMinutes"
-                class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-mono"
+                class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-mono"
               />
-              <span class="text-xs text-slate-500 font-mono">min</span>
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-mono">min</span>
             </div>
             <!-- Quick Chips -->
-            <div class="flex items-center gap-1 mt-1.5 flex-wrap">
+            <div class="flex items-center gap-1.5 mt-2 flex-wrap">
               @for (chip of durationChips; track chip.value) {
                 <button
                   type="button"
                   (click)="setDuration(chip.value)"
-                  class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer font-mono"
+                  class="text-[10px] px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700/60 cursor-pointer font-mono"
                 >
                   {{ chip.label }}
                 </button>
@@ -93,15 +93,15 @@ import { AutoFocusDirective } from '../../../../shared/directives/auto-focus.dir
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
             Priority
           </label>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             @for (p of priorities; track p.key) {
               <button
                 type="button"
                 (click)="setPriority(p.key)"
-                class="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium border transition-all cursor-pointer"
+                class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-medium border transition-all cursor-pointer"
                 [ngClass]="form.get('priority')?.value === p.key
-                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-transparent shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'"
+                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-transparent shadow-xs font-semibold'
+                  : 'bg-slate-50 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'"
               >
                 <span class="w-2 h-2 rounded-full" [style.backgroundColor]="p.color"></span>
                 <span>{{ p.label }}</span>
@@ -132,7 +132,7 @@ import { AutoFocusDirective } from '../../../../shared/directives/auto-focus.dir
             </div>
             <select
               formControlName="categoryId"
-              class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all cursor-pointer"
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all cursor-pointer [&>option]:bg-white [&>option]:text-slate-900 [&>option]:dark:bg-slate-900 [&>option]:dark:text-slate-100"
             >
               @for (cat of store.categories(); track cat.id) {
                 <option [value]="cat.id">{{ cat.name }}</option>
@@ -147,7 +147,7 @@ import { AutoFocusDirective } from '../../../../shared/directives/auto-focus.dir
             </label>
             <select
               formControlName="status"
-              class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+              class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all cursor-pointer [&>option]:bg-white [&>option]:text-slate-900 [&>option]:dark:bg-slate-900 [&>option]:dark:text-slate-100"
             >
               <option value="TODO">To Do</option>
               <option value="IN_PROGRESS">In Progress</option>
@@ -160,13 +160,13 @@ import { AutoFocusDirective } from '../../../../shared/directives/auto-focus.dir
         <!-- Tags Input -->
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            Tags <span class="text-slate-400 font-normal">(comma-separated)</span>
+            Tags <span class="text-slate-400 dark:text-slate-500 font-normal">(comma-separated)</span>
           </label>
           <input
             type="text"
             formControlName="tagsInput"
             placeholder="e.g., frontend, auth, sprint-46"
-            class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
           />
         </div>
 
@@ -179,7 +179,7 @@ import { AutoFocusDirective } from '../../../../shared/directives/auto-focus.dir
             rows="3"
             formControlName="description"
             placeholder="Add relevant links, notes, acceptance criteria, or PR details..."
-            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all resize-y"
+            class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all resize-y"
           ></textarea>
         </div>
 

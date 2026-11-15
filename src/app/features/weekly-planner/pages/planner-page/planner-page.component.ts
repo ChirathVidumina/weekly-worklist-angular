@@ -26,7 +26,7 @@ import { ToastContainerComponent } from '../../../../shared/ui/toast-container/t
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="min-h-screen flex flex-col bg-slate-50/50 dark:bg-[#090a0f] text-slate-900 dark:text-slate-100 selection:bg-indigo-500/20">
+    <div class="min-h-screen flex flex-col w-full max-w-full overflow-x-hidden bg-slate-50/50 dark:bg-[#090a0f] text-slate-900 dark:text-slate-100 selection:bg-indigo-500/20">
       
       <!-- Sticky Navigation Header -->
       <app-planner-header />
@@ -39,17 +39,17 @@ import { ToastContainerComponent } from '../../../../shared/ui/toast-container/t
 
       <!-- Backend Connection Notice if offline -->
       @if (store.error(); as err) {
-        <div class="bg-rose-500/10 border-b border-rose-500/20 px-4 py-2.5 text-xs text-rose-600 dark:text-rose-400 flex items-center justify-between">
-          <div class="flex items-center gap-2 max-w-4xl">
+        <div class="bg-rose-500/10 border-b border-rose-500/20 px-3 sm:px-4 py-2.5 text-xs text-rose-600 dark:text-rose-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <div class="flex items-center gap-2 max-w-4xl min-w-0">
             <svg class="w-4 h-4 shrink-0 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <span><strong>Backend Server Offline:</strong> {{ err }}</span>
+            <span class="truncate"><strong>Backend Server Offline:</strong> {{ err }}</span>
           </div>
           <button
             type="button"
             (click)="store.loadWeekTasks()"
-            class="px-2.5 py-1 text-xs font-semibold rounded bg-rose-600 text-white hover:bg-rose-500 transition-colors cursor-pointer shrink-0 ml-3"
+            class="px-2.5 py-1 text-xs font-semibold rounded bg-rose-600 text-white hover:bg-rose-500 transition-colors cursor-pointer shrink-0 self-end sm:self-auto"
           >
             Retry Connection
           </button>
@@ -57,7 +57,7 @@ import { ToastContainerComponent } from '../../../../shared/ui/toast-container/t
       }
 
       <!-- Main Content Area -->
-      <main class="flex-1 max-w-[1720px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 flex flex-col">
+      <main class="flex-1 max-w-[1720px] w-full mx-auto px-2 sm:px-6 lg:px-8 py-3 flex flex-col">
         
         <!-- Desktop 7-Day Kanban Board (md: and up) -->
         <div class="hidden md:block flex-1">

@@ -9,13 +9,13 @@ import { ProgressRingComponent } from '../../../../shared/ui/progress-ring/progr
   imports: [CommonModule, ProgressRingComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="py-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/40 dark:bg-[#0e1017]/40">
-      <div class="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <section class="py-3 sm:py-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/40 dark:bg-[#0e1017]/40">
+      <div class="max-w-[1720px] mx-auto px-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         
         <!-- Left: Week Navigation Controls & Label -->
-        <div class="flex items-center gap-3">
+        <div class="flex items-center justify-between sm:justify-start gap-2.5 sm:gap-3">
           <!-- Prev / Today / Next Button Group -->
-          <div class="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
+          <div class="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0">
             <button
               type="button"
               (click)="store.navigateWeek('prev')"
@@ -52,18 +52,18 @@ import { ProgressRingComponent } from '../../../../shared/ui/progress-ring/progr
           </div>
 
           <!-- Date Label & Week Badge -->
-          <div class="flex items-center gap-2">
-            <h2 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <h2 class="text-sm sm:text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 truncate">
               {{ store.weekLabel() }}
             </h2>
-            <span class="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800/90 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60">
+            <span class="text-[10px] sm:text-xs font-mono font-medium px-1.5 sm:px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800/90 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60 shrink-0">
               W{{ store.unfilteredWeekSchedule().weekNumber }}
             </span>
           </div>
         </div>
 
         <!-- Right: Progress Stats & Velocity Bar -->
-        <div class="flex items-center gap-4 sm:gap-6 self-stretch sm:self-auto justify-between sm:justify-end">
+        <div class="flex items-center gap-3 sm:gap-6 self-stretch sm:self-auto justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200/50 dark:border-slate-800/50">
           
           <!-- Hours & Tasks Breakdown -->
           <div class="flex items-center gap-4 text-xs">

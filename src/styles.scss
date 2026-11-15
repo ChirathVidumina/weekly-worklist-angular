@@ -1,6 +1,9 @@
 @use "tailwindcss";
 
-:root {
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root, :root[data-theme="light"] {
+  color-scheme: light;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   
   /* Light Mode Tokens (Linear/Notion Inspired) */
@@ -52,7 +55,8 @@
   --shadow-card-hover: 0 12px 24px -6px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
 }
 
-.dark {
+.dark, :root[data-theme="dark"] {
+  color-scheme: dark;
   /* Dark Mode Tokens (Linear Midnight Dark) */
   --bg-app: #090a0f;
   --bg-surface: #12141c;
@@ -112,6 +116,20 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Utility for hidden scrollbars in horizontal filter strips */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Safe area padding utilities for mobile edge-to-edge viewports */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 1.5rem);
 }
 
 /* Custom scrollbars */

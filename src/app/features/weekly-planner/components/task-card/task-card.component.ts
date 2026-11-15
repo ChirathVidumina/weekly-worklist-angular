@@ -47,7 +47,7 @@ import { DateUtilsService } from '../../../../core/services/date-utils.service';
           <!-- Title and Description -->
           <div class="flex-1 min-w-0" (click)="onCardClick($event)">
             <p
-              class="text-xs font-medium text-slate-900 dark:text-slate-100 leading-snug line-clamp-2 transition-all"
+              class="text-xs font-medium text-slate-900 dark:text-slate-100 leading-snug line-clamp-2 transition-all break-words"
               [class.line-through]="task.status === 'COMPLETED'"
               [class.text-slate-400]="task.status === 'COMPLETED'"
               [class.dark:text-slate-500]="task.status === 'COMPLETED'"
@@ -56,7 +56,7 @@ import { DateUtilsService } from '../../../../core/services/date-utils.service';
             </p>
 
             @if (task.description) {
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-1 leading-normal">
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-1 leading-normal break-words">
                 {{ task.description }}
               </p>
             }
@@ -67,7 +67,7 @@ import { DateUtilsService } from '../../../../core/services/date-utils.service';
             <button
               type="button"
               (click)="toggleMenu($event)"
-              class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-all focus:opacity-100 cursor-pointer"
+              class="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-all focus:opacity-100 cursor-pointer"
               title="More actions"
               aria-label="Task options"
             >
@@ -79,7 +79,7 @@ import { DateUtilsService } from '../../../../core/services/date-utils.service';
             <!-- Context Dropdown Menu -->
             @if (isMenuOpen) {
               <div
-                class="absolute right-0 top-6 w-44 bg-white dark:bg-[#1a1e2d] border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-xl py-1 z-30"
+                class="absolute right-0 top-7 w-48 max-w-[85vw] bg-white dark:bg-[#1a1e2d] border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-xl py-1.5 z-40"
                 (click)="$event.stopPropagation()"
               >
                 <button
@@ -115,6 +115,26 @@ import { DateUtilsService } from '../../../../core/services/date-utils.service';
                   Move to Tomorrow
                 </button>
 
+                <!-- Mobile & Quick Reschedule Sub-options -->
+                <div class="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  Reschedule Day
+                </div>
+                <div class="px-2 py-1 grid grid-cols-4 gap-1">
+                  @for (d of weekDays; track d.date) {
+                    <button
+                      type="button"
+                      [disabled]="d.date === task.date"
+                      (click)="onMoveToDay(d.date)"
+                      class="px-1.5 py-1 text-[10px] font-bold rounded text-center transition-colors cursor-pointer"
+                      [ngClass]="d.date === task.date
+                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                        : 'bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 text-slate-700 dark:text-slate-300'"
+                    >
+                      {{ d.shortDayName }}
+                    </button>
+                  }
+                </div>
+
                 <button
                   type="button"
                   (click)="onDuplicate()"
@@ -148,7 +168,7 @@ import { DateUtilsService } from '../../../../core/services/date-utils.service';
           
           <!-- Dynamic Category Tag -->
           <span
-            class="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border transition-colors"
+            class="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border transition-colors shrink-0"
             [style.borderColor]="categoryItem.color + '40'"
             [style.backgroundColor]="categoryItem.color + '15'"
             [style.color]="categoryItem.color"
@@ -159,7 +179,7 @@ import { DateUtilsService } from '../../../../core/services/date-utils.service';
 
           <!-- Time Estimate Pill -->
           @if (task.estimatedMinutes) {
-            <span class="inline-flex items-center gap-1 text-[10px] font-mono text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800/80">
+            <span class="inline-flex items-center gap-1 text-[10px] font-mono text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800/90 border border-slate-200/60 dark:border-slate-700/60 shrink-0">
               <svg class="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -169,7 +189,7 @@ import { DateUtilsService } from '../../../../core/services/date-utils.service';
 
           <!-- First Tag if present -->
           @if (task.tags && task.tags.length > 0) {
-            <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[100px]">
               #{{ task.tags[0] }}
             </span>
           }
@@ -185,6 +205,10 @@ export class TaskCardComponent {
   private readonly dateUtils = inject(DateUtilsService);
 
   isMenuOpen = false;
+
+  get weekDays() {
+    return this.store.weekSchedule().days;
+  }
 
   get priorityMeta() {
     return PRIORITY_METADATA[this.task.priority] || PRIORITY_METADATA[Priority.MEDIUM];
@@ -225,6 +249,11 @@ export class TaskCardComponent {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     this.store.moveTaskToDay(this.task.id, this.dateUtils.formatDateToISO(tomorrow));
+  }
+
+  onMoveToDay(dateKey: string): void {
+    this.isMenuOpen = false;
+    this.store.moveTaskToDay(this.task.id, dateKey);
   }
 
   onDuplicate(): void {

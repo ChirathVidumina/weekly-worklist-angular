@@ -9,7 +9,7 @@ import { ToastService, ToastMessage } from '../../../core/services/toast.service
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
-      class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"
+      class="fixed bottom-20 sm:bottom-4 right-2 sm:right-4 z-50 flex flex-col gap-2 max-w-[calc(100vw-1rem)] sm:max-w-sm w-full pointer-events-none px-2 sm:px-0"
       aria-live="polite"
     >
       @for (toast of toasts(); track toast.id) {

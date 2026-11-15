@@ -47,7 +47,7 @@ import { ButtonComponent } from '../../../../shared/ui/button/button.component';
               [(ngModel)]="categoryName"
               placeholder="e.g., Cricket Practice, University, Client Work"
               maxlength="30"
-              class="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#12141c] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+              class="w-full px-3 py-2 text-xs bg-white dark:bg-[#12141c] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
             />
           </div>
 
@@ -61,7 +61,7 @@ import { ButtonComponent } from '../../../../shared/ui/button/button.component';
                 <button
                   type="button"
                   (click)="selectedColor.set(preset.hex)"
-                  class="w-6 h-6 rounded-full border-2 transition-all cursor-pointer relative flex items-center justify-center focus:outline-none"
+                  class="w-7 h-7 rounded-full border-2 transition-all cursor-pointer relative flex items-center justify-center focus:outline-none shrink-0"
                   [style.backgroundColor]="preset.hex"
                   [class.border-slate-900]="selectedColor() === preset.hex"
                   [class.dark:border-white]="selectedColor() === preset.hex"
@@ -81,17 +81,17 @@ import { ButtonComponent } from '../../../../shared/ui/button/button.component';
           </div>
 
           <!-- Live Preview -->
-          <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Live Preview:</span>
+          <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 shrink-0">Live Preview:</span>
               <span
-                class="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded border transition-all"
+                class="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded border transition-all truncate"
                 [style.borderColor]="selectedColor() + '40'"
                 [style.backgroundColor]="selectedColor() + '15'"
                 [style.color]="selectedColor()"
               >
-                <span class="w-1.5 h-1.5 rounded-full" [style.backgroundColor]="selectedColor()"></span>
-                {{ categoryName.trim() || 'Category Name' }}
+                <span class="w-1.5 h-1.5 rounded-full shrink-0" [style.backgroundColor]="selectedColor()"></span>
+                <span class="truncate">{{ categoryName.trim() || 'Category Name' }}</span>
               </span>
             </div>
 
@@ -112,7 +112,7 @@ import { ButtonComponent } from '../../../../shared/ui/button/button.component';
             Configured Categories ({{ store.categories().length }})
           </h4>
 
-          <div class="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+          <div class="space-y-1.5 max-h-56 overflow-y-auto pr-1">
             @for (cat of store.categories(); track cat.id) {
               <div
                 class="flex items-center justify-between p-2.5 rounded-xl border transition-all bg-white dark:bg-[#12141c] border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700"
@@ -120,16 +120,16 @@ import { ButtonComponent } from '../../../../shared/ui/button/button.component';
                 <!-- Category Tag Preview & Task Count -->
                 <div class="flex items-center gap-2.5 min-w-0">
                   <span
-                    class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded border"
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded border truncate"
                     [style.borderColor]="cat.color + '40'"
                     [style.backgroundColor]="cat.color + '15'"
                     [style.color]="cat.color"
                   >
-                    <span class="w-1.5 h-1.5 rounded-full" [style.backgroundColor]="cat.color"></span>
-                    {{ cat.name }}
+                    <span class="w-1.5 h-1.5 rounded-full shrink-0" [style.backgroundColor]="cat.color"></span>
+                    <span class="truncate">{{ cat.name }}</span>
                   </span>
 
-                  <span class="text-[11px] text-slate-400 dark:text-slate-500">
+                  <span class="text-[11px] text-slate-500 dark:text-slate-400 shrink-0">
                     {{ getTaskCountForCategory(cat.id) }} tasks
                   </span>
                 </div>
@@ -139,7 +139,7 @@ import { ButtonComponent } from '../../../../shared/ui/button/button.component';
                   <button
                     type="button"
                     (click)="editCategory(cat)"
-                    class="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     title="Edit category"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,7 +150,7 @@ import { ButtonComponent } from '../../../../shared/ui/button/button.component';
                   <button
                     type="button"
                     (click)="deleteCategory(cat)"
-                    class="p-1 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                    class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                     title="Delete category"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
