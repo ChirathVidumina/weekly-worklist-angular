@@ -45,10 +45,11 @@ public class TasksController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [HttpPatch("{id}")]
     [ProducesResponseType(typeof(TaskResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TaskResponseDto>> Update(string id, [FromBody] TaskRequestDto request)
+    public async Task<ActionResult<TaskResponseDto>> Update(string id, [FromBody] UpdateTaskRequestDto request)
     {
         var updated = await _taskService.UpdateTaskAsync(id, request);
         return Ok(updated);

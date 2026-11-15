@@ -329,9 +329,23 @@ export class WeeklyWorkStore {
 
   updateTask(id: string, updates: UpdateTaskDto): void {
     this.isLoading.set(true);
-    const categoryName = updates.categoryId ? this.getCategoryById(updates.categoryId).name : updates.category;
+    const currentTask = this.tasks().find(t => t.id === id);
+    const categoryName = updates.categoryId 
+      ? this.getCategoryById(updates.categoryId).name 
+      : (updates.category ?? currentTask?.category);
 
     const payload: UpdateTaskDto = {
+      ...(currentTask ? {
+        title: currentTask.title,
+        description: currentTask.description,
+        date: currentTask.date,
+        dateKey: currentTask.dateKey,
+        priority: currentTask.priority,
+        categoryId: currentTask.categoryId,
+        status: currentTask.status,
+        estimatedMinutes: currentTask.estimatedMinutes,
+        order: currentTask.order
+      } : {}),
       ...updates,
       category: categoryName
     };
@@ -362,7 +376,11 @@ export class WeeklyWorkStore {
     // Optimistic UI update
     this.tasks.update(tasks => tasks.map(t => t.id === id ? { ...t, status: nextStatus, completedAt } : t));
 
-    this.repository.updateTask(id, { status: nextStatus, completedAt }).subscribe({
+    this.repository.updateTask(id, {
+      ...currentTask,
+      status: nextStatus,
+      completedAt
+    }).subscribe({
       next: (saved) => {
         this.tasks.update(tasks => tasks.map(t => t.id === id ? saved : t));
         if (newlyCompleted) {

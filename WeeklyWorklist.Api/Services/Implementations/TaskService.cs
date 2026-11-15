@@ -83,18 +83,33 @@ public class TaskService : ITaskService
         return MapToResponseDto(created);
     }
 
-    public async Task<TaskResponseDto> UpdateTaskAsync(string id, TaskRequestDto request)
+    public async Task<TaskResponseDto> UpdateTaskAsync(string id, UpdateTaskRequestDto request)
     {
         var existing = await _taskRepository.GetByIdAsync(id)
             ?? throw new ResourceNotFoundException($"Task not found with id: {id}");
 
         var oldStatus = existing.Status;
-        var newStatus = string.IsNullOrWhiteSpace(request.Status) ? existing.Status : request.Status.ToUpperInvariant();
 
-        existing.Title = request.Title.Trim();
-        existing.Description = request.Description;
-        existing.DateKey = request.GetEffectiveDateKey();
-        existing.Priority = request.Priority;
+        if (!string.IsNullOrWhiteSpace(request.Title))
+        {
+            existing.Title = request.Title.Trim();
+        }
+
+        if (request.Description != null)
+        {
+            existing.Description = request.Description;
+        }
+
+        var effectiveDateKey = request.GetEffectiveDateKey();
+        if (!string.IsNullOrWhiteSpace(effectiveDateKey))
+        {
+            existing.DateKey = effectiveDateKey;
+        }
+
+        if (request.Priority.HasValue)
+        {
+            existing.Priority = request.Priority.Value;
+        }
 
         if (!string.IsNullOrWhiteSpace(request.CategoryId) || !string.IsNullOrWhiteSpace(request.Category))
         {
@@ -106,8 +121,27 @@ public class TaskService : ITaskService
             existing.CategoryName = resolvedName;
         }
 
-        existing.Status = newStatus;
-        existing.EstimatedMinutes = request.EstimatedMinutes;
+        if (!string.IsNullOrWhiteSpace(request.Status))
+        {
+            var newStatus = request.Status.ToUpperInvariant();
+            existing.Status = newStatus;
+
+            if (newStatus == "COMPLETED" && oldStatus != "COMPLETED")
+            {
+                existing.CompletedAt = !string.IsNullOrWhiteSpace(request.CompletedAt) && DateTime.TryParse(request.CompletedAt, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsedDt)
+                    ? parsedDt
+                    : DateTime.UtcNow;
+            }
+            else if (newStatus != "COMPLETED")
+            {
+                existing.CompletedAt = null;
+            }
+        }
+
+        if (request.EstimatedMinutes.HasValue)
+        {
+            existing.EstimatedMinutes = request.EstimatedMinutes.Value;
+        }
         
         if (request.Order.HasValue)
         {
@@ -119,15 +153,7 @@ public class TaskService : ITaskService
             existing.Tags = request.Tags;
         }
 
-        if (newStatus == "COMPLETED" && oldStatus != "COMPLETED")
-        {
-            existing.CompletedAt = DateTime.UtcNow;
-        }
-        else if (newStatus != "COMPLETED")
-        {
-            existing.CompletedAt = null;
-        }
-
+        existing.UpdatedAt = DateTime.UtcNow;
         var updated = await _taskRepository.UpdateAsync(existing);
         _logger.LogInformation("Updated task id={Id}, title={Title}, status={Status}", updated.Id, updated.Title, updated.Status);
 
